@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <script src="lib/codemirror.js"></script>
+    <link rel="stylesheet" href="/lib/codemirror.css">
+    <link type="text/css" rel="stylesheet" href="addon/hint/show-hint.css" />
+    <script src="mode/javascript/javascript.js"></script>
+    <script src="addon/hint/show-hint.js"></script>
+    <script src="addon/hint/javascript-hint.js"></script>
+</head>
+
+<body>
+    <textarea id="editor" name="editor"></textarea>
+</body>
+<script>
+CodeMirror.commands.autocomplete = function(cm) {
+    cm.showHint({
+        hint: CodeMirror.hint.anyword
+    });
+}
+var editor = CodeMirror.fromTextArea(document.getElementById("editor"), {
+    lineNumbers: true,
+    extraKeys: {
+        "Ctrl": "autocomplete"
+    }
+});
+// var orig = CodeMirror.hint.javascript;
+// CodeMirror.hint.javascript = function(cm) {
+//   var inner = orig(cm) || {from: cm.getCursor(), to: cm.getCursor(), list: []};
+//   inner.list.push("let");
+//   return inner;
+// };
+
+CodeMirror.registerHelper('hint', 'dictionaryHint', function(editor) {
+    var cur = editor.getCursor(),
+        curLine = editor.getLine(cur.line);
+    var start = cur.ch,
+        end = start;
+    while (end < curLine.length && /[\w$]+/.test(curLine.charAt(end))) ++end;
+    while (start && /[\w$]+/.test(curLine.charAt(start - 1))) --start;
+    var curWord = start != end && curLine.slice(start, end);
+    var regex = new RegExp('^' + curWord, 'i');
+    return {
+        list: (!curWord ? [] : dictionary.filter(function(item) {
+            return item.match(regex);
+        })).sort(),
+        from: CodeMirror.Pos(cur.line, start),
+        to: CodeMirror.Pos(cur.line, end)
+    }
+});
+editor.on("inputRead",function(cm,changeObj){
+   // hinting logic
+   editor.showHint({
+   	hint: CodeMirror.hint.dictionaryHint
+   });
+})
+
+</script>
+
+</html>
